@@ -1,4 +1,5 @@
-import string
+import string, Tkinter
+import tkMessageBox 
  
 output = []
 line_list = []
@@ -16,3 +17,14 @@ for i in range(len(line_list)):
             output.append(' ')
 
 print ''.join(output)
+
+top = Tkinter.Tk()
+
+def helloCallBack():
+   tkMessageBox.showinfo( "Hello Python", "Hello World")
+
+B = Tkinter.Button(top, text ="Hello", command = helloCallBack)
+
+B.pack()
+top.mainloop()
+
