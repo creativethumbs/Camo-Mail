@@ -1,3 +1,5 @@
+# program that sends 'encrypted' emails
+
 from Tkinter import *
 import smtplib
 import datetime
@@ -20,8 +22,7 @@ def loginScreen(msg, subj, from_addr, to_addr):
     subj_str = subj
     from_str = from_addr
     to_str = to_addr
-    print subj_str, msg_str, from_str, to_str
-    
+
     destroyAll()
 
     global password_field
@@ -38,28 +39,37 @@ def loginScreen(msg, subj, from_addr, to_addr):
     cancelbutton = Button(bottomframe, text="Cancel", command = messageScreen)
     cancelbutton.grid(row=2, column=1, ipady=20)
 
-def encryptMsg():
-    output = []
-    for i in range(len(msg_str)):  
-        output.append(msg_str[i])
-        if msg_str[i] != '\n':
-            output.append(' ')  
+# encrypts the message and subject
+def encrypt():
+    global msg_str, subj_str
+    encryptedMsg = []
+    encryptedSubj = []
 
-    return ''.join(output)
+    for i in range(len(msg_str)):  
+        encryptedMsg.append(msg_str[i])
+        if msg_str[i] != '\n':
+            encryptedMsg.append(' ') 
+
+    for i in range(len(subj_str)):  
+        encryptedSubj.append(subj_str[i])
+        encryptedSubj.append(' ')   
+
+    msg_str = ''.join(encryptedMsg)
+    subj_str = ''.join(encryptedSubj)
 
 def sendMsg(password_field): 
     password = password_field
-    print from_str
-    print to_str
-    print msg_str
-    print password
+    #print from_str
+    #print to_str
+    #print msg_str
+    #print password
 
-    encrypted = encryptMsg()
+    encrypt()
 
     header = 'From: %s\n' % from_str
     header += 'To: %s\n' % to_str 
     header += 'Subject: %s\n\n' % subj_str
-    message = header + encrypted
+    message = header + msg_str
 
     server = smtplib.SMTP('smtp.gmail.com:587')
     server.starttls()
@@ -69,7 +79,9 @@ def sendMsg(password_field):
     
     destroyAll()
     Label(topframe, text="Message sent.").grid(row=0)
-    
+
+    sendbutton = Button(bottomframe, text="Send Another Message", command = messageScreen)
+    sendbutton.grid(row=1, column=0, ipady=20)
 
 # clear screen
 def destroyAll():
