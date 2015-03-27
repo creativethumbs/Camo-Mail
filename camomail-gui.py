@@ -1,6 +1,9 @@
 from Tkinter import *
-from smtplib import SMTP
+import smtplib
 import datetime
+import email.utils
+from email.mime.text import MIMEText
+import getpass
 
 root = Tk()
 # so people don't screw around with the window
@@ -17,7 +20,7 @@ def loginScreen(msg, subj, from_addr, to_addr):
     subj_str = subj
     from_str = from_addr
     to_str = to_addr
-    print subj_str
+    print subj_str, msg_str, from_str, to_str
     
     destroyAll()
 
@@ -34,31 +37,39 @@ def loginScreen(msg, subj, from_addr, to_addr):
 
     cancelbutton = Button(bottomframe, text="Cancel", command = messageScreen)
     cancelbutton.grid(row=2, column=1, ipady=20)
-    
+
+def encryptMsg():
+    output = []
+    for i in range(len(msg_str)):  
+        output.append(msg_str[i])
+        if msg_str[i] != '\n':
+            output.append(' ')  
+
+    return ''.join(output)
 
 def sendMsg(password_field): 
     password = password_field
+    print from_str
+    print to_str
+    print msg_str
+    print password
 
-    debuglevel = 0
+    encrypted = encryptMsg()
 
-    smtp = SMTP()
-    smtp.set_debuglevel(debuglevel)
-    smtp.connect('smtp.gmail.com', 465)
-    smtp.login(from_addr, password)
+    header = 'From: %s\n' % from_str
+    header += 'To: %s\n' % to_str 
+    header += 'Subject: %s\n\n' % subj_str
+    message = header + encrypted
 
-    to_addr = ["ticha.seth@gmail.com"]
-
-    email = """\
-    From: %s
-    To: %s
-    Subject: %s
-
-    %s
-    """ % (from_str, ", ".join(to_addr), subj_str, msg_str)
-
-    smtp.sendmail(from_str, to_addr, email)
-    smtp.quit()
+    server = smtplib.SMTP('smtp.gmail.com:587')
+    server.starttls()
+    server.login(from_str, password)
+    server.sendmail(from_str, to_str, message)
+    server.quit()
+    
     destroyAll()
+    Label(topframe, text="Message sent.").grid(row=0)
+    
 
 # clear screen
 def destroyAll():
