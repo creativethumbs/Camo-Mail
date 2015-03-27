@@ -10,6 +10,7 @@ import getpass
 root = Tk()
 # so people don't screw around with the window
 root.resizable(0,0)
+root.wm_title("Camo Mail")
 
 topframe = Frame(root)
 topframe.pack()
@@ -58,12 +59,7 @@ def encrypt():
     subj_str = ''.join(encryptedSubj)
 
 def sendMsg(password_field): 
-    password = password_field
-    #print from_str
-    #print to_str
-    #print msg_str
-    #print password
-
+    password = password_field 
     encrypt()
 
     header = 'From: %s\n' % from_str
