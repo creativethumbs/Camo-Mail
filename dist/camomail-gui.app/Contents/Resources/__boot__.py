@@ -18,32 +18,6 @@ def _update_path():
 _update_path()
 
 
-def _site_packages():
-    import site, sys, os
-    paths = []
-    prefixes = [sys.prefix]
-    if sys.exec_prefix != sys.prefix:
-        prefixes.append(sys.exec_prefix)
-    for prefix in prefixes:
-        paths.append(os.path.join(prefix, 'lib', 'python' + sys.version[:3],
-            'site-packages'))
-    if os.path.join('.framework', '') in os.path.join(sys.prefix, ''):
-        home = os.environ.get('HOME')
-        if home:
-            paths.append(os.path.join(home, 'Library', 'Python',
-                sys.version[:3], 'site-packages'))
-
-    # Work around for a misfeature in setuptools: easy_install.pth places
-    # site-packages way to early on sys.path and that breaks py2app bundles.
-    # NOTE: this is hacks into an undocumented feature of setuptools and
-    # might stop to work without warning.
-    sys.__egginsert = len(sys.path)
-
-    for path in paths:
-        site.addsitedir(path)
-_site_packages()
-
-
 """ Add Apple's additional packages to sys.path """
 def add_system_python_extras():
     import site, sys
@@ -335,22 +309,13 @@ def _chdir_resource():
 _chdir_resource()
 
 
-def _setup_ctypes():
-    from ctypes.macholib import dyld
-    import os
-    frameworks = os.path.join(os.environ['RESOURCEPATH'], '..', 'Frameworks')
-    dyld.DEFAULT_FRAMEWORK_FALLBACK.insert(0, frameworks)
-    dyld.DEFAULT_LIBRARY_FALLBACK.insert(0, frameworks)
-
-_setup_ctypes()
-
-
-def _path_inject(paths):
-    import sys
-    sys.path[:0] = paths
-
-
-_path_inject(['/Users/tichaseth/Documents/CMU 2014-15/Internet-Resistance/Camo-Mail'])
+def _disable_linecache():
+    import linecache
+    def fake_getline(*args, **kwargs):
+        return ''
+    linecache.orig_getline = linecache.getline
+    linecache.getline = fake_getline
+_disable_linecache()
 
 
 import re, sys
@@ -374,27 +339,35 @@ def _run():
     global __file__
     import os, site
     sys.frozen = 'macosx_app'
+    base = os.environ['RESOURCEPATH']
 
     argv0 = os.path.basename(os.environ['ARGVZERO'])
     script = SCRIPT_MAP.get(argv0, DEFAULT_SCRIPT)
 
-    sys.argv[0] = __file__ = script
+    path = os.path.join(base, script)
+    sys.argv[0] = __file__ = path
     if sys.version_info[0] == 2:
-        with open(script, 'rU') as fp:
+        with open(path, 'rU') as fp:
             source = fp.read() + "\n"
     else:
-        with open(script, 'rb') as fp:
+        with open(path, 'rb') as fp:
             encoding = guess_encoding(fp)
 
-        with open(script, 'r', encoding=encoding) as fp:
+        with open(path, 'r', encoding=encoding) as fp:
             source = fp.read() + '\n'
+    exec(compile(source, path, 'exec'), globals(), globals())
 
-    exec(compile(source, script, 'exec'), globals(), globals())
+
+def _setup_ctypes():
+    from ctypes.macholib import dyld
+    import os
+    frameworks = os.path.join(os.environ['RESOURCEPATH'], '..', 'Frameworks')
+    dyld.DEFAULT_FRAMEWORK_FALLBACK.insert(0, frameworks)
+    dyld.DEFAULT_LIBRARY_FALLBACK.insert(0, frameworks)
+
+_setup_ctypes()
 
 
-DEFAULT_SCRIPT='/Users/tichaseth/Documents/CMU 2014-15/Internet-Resistance/Camo-Mail/camomail-gui.py'
+DEFAULT_SCRIPT='camomail-gui.py'
 SCRIPT_MAP={}
-try:
-    _run()
-except KeyboardInterrupt:
-    pass
+_run()
